@@ -1,0 +1,28 @@
+module ramp
+
+    implicit none
+
+    real, constant :: twopi
+
+contains
+
+    attributes(global) subroutine buildramp(x, n)
+
+        implicit none
+        integer, value  :: n
+        real, device    :: x(n)
+        real, shared    :: term
+        integer         :: i
+
+        if (threadidx%x == 1) term = twopi / float(n)
+        call syncthreads()
+
+        i = (blockidx%x - 1) * blockdim%x + threadidx%x
+
+        if (i <= n) then
+            x(i) = cos(float(i - 1) * term) 
+        endif
+
+    end subroutine 
+
+end module
