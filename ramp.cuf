@@ -23,6 +23,8 @@ contains
             x(i) = cos(float(i - 1) * term) 
         endif
 
+        return
+
     end subroutine 
 
 end module

@@ -1,0 +1,14 @@
+module ffill
+
+contains
+
+    attributes(device) subroutine fill(a)
+        implicit none
+        integer, device :: a(*)
+        integer         :: i
+
+        i = (blockidx%x - 1) * blockdim%x + threadidx%x
+        a(i) = i
+    end subroutine
+
+end module ffill
