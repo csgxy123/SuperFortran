@@ -1,4 +1,4 @@
-ALL: eds ramp tfill devtest textest
+ALL: eds ramp tfill devtest textest pttest
 
 eds: eds.f03 mytests.o
 	pgfortran -Mcuda $+ -o $@
@@ -14,6 +14,9 @@ devtest: devptrtest.f03 devptr.o
 
 textest: textest.f03 memtests.o
 	pgfortran -Mcuda=rdc $+ -o $@
+
+pttest: pttest.cuf
+	pgfortran -Mcuda=charstring  $+ -o $@
 
 mytests.o: mytests.cuf
 	pgfortran -Mcuda -c $+
@@ -32,5 +35,5 @@ memtests.o: memtests.cuf
 
 .PHONY: clean
 clean:
-	rm -f *.o *.mod devtest ramp tfill eds textest 
+	rm -f *.o *.mod devtest ramp tfill eds textest pttest
 

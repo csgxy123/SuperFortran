@@ -1,0 +1,33 @@
+module testprint
+
+contains
+
+    attributes(global) subroutine pttest()
+        implicit none
+        character*12    :: c
+        integer         :: i
+
+        i = threadIdx%x
+        if (i / 2 * 2 .eq. i) then
+            c = "Even Thread:"
+        else
+            c = "Odd  Thread:"
+        endif
+
+        print *, c, c(6:11), i
+
+    end subroutine pttest
+
+end module testprint
+
+program tp
+
+    use cudafor
+    use testprint
+    implicit none
+    integer :: istat
+
+    call pttest<<<1, 2>>>()
+    istat = cudaDeviceSynchronize()
+
+end program tp
