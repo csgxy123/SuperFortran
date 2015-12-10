@@ -1,0 +1,17 @@
+program multidimred
+
+    use cudafor
+    implicit none
+    real(8), managed :: a(5, 5, 5, 5, 5)
+    real(8), managed :: b(5, 5, 5, 5)
+    real(8) :: c = 0.
+    integer :: idim
+
+    call random_number(a)
+    do idim = 1, 5
+        b = sum(a, dim = idim)
+        c = max(maxval(b), c)
+    enddo
+    print *, "Max along any dimension", c
+
+end program
