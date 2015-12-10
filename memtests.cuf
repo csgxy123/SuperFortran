@@ -1,0 +1,44 @@
+module memtests
+
+    implicit none
+    real(8), texture, pointer :: t(:)   ! declare the dexture
+
+contains
+
+    attributes(device) integer function bitrev8(i)
+        implicit none
+        integer :: ix1, ix2, ix
+        integer :: i
+
+        ix  = i
+        ix1 = ishft(iand(ix, z'0aa'), -1)
+        ix2 = ishft(iand(ix, z'055'), 1)
+        ix  = ior(ix1, ix2)
+        ix1 = ishft(iand(ix, z'0cc'), -2)
+        ix2 = ishft(iand(ix, z'033'), 2)
+        bitrev8 = iand(ior(ix1, ix2), z'0ff')
+    end function bitrev8
+
+    attributes(global) subroutine without(a, b)
+        implicit none
+        real(8), device :: a(*), b(*)
+        integer :: i, j
+
+        i = blockDim%x * (blockIdx%x - 1) + threadIdx%x
+        j = bitrev8(threadIdx%x - 1) + 1
+        b(i) = a(j)
+        return
+    end subroutine without
+
+    attributes(global) subroutine withtex(a, b)
+        implicit none
+        real(8), device :: a(*), b(*)
+        integer :: i, j
+
+        i = blockDim%x * (blockIdx%x - 1) + threadIdx%x
+        j = bitrev8(threadIdx%x - 1) + 1
+        b(i) = t(j)
+        return
+    end subroutine withtex
+
+end module memtests
