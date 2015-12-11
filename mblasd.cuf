@@ -1,0 +1,36 @@
+module mblasd
+
+contains
+
+    attributes(global) subroutine testblas(a, b, n)
+        use cublas_device
+        implicit none
+        real, device :: a(*), b(*)
+        type(cublasHandle) :: h
+        integer, value :: n
+        integer :: i, j
+        
+        j = cublasCreate_v2(h)
+        i = threadIdx%x
+        if (i .eq. 1) then
+            j = cublasSswap_v2(h, n, a, 1, b, 1)
+        endif
+        j = cublasDestroy_v2(h)
+        return
+    end subroutine testblas
+
+end module mblasd
+
+! Compile with -Mcuda=cc35 -lcublas_device
+program cublasdev
+    use cudafor
+    use mblasd
+    implicit none
+    integer, parameter :: n = 1000
+    real, managed :: a(n), b(n)
+    integer :: istat
+    a = 1.0; b = 2.0
+    call testblas<<<1, 1>>>(a, b, n)
+    istat = cudaDeviceSynchronize()
+    print *, all(a .eq. 2 * b)
+end program cublasdev

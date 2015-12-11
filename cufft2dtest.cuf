@@ -1,0 +1,20 @@
+program cufft2dtest
+
+    use cufft
+    implicit none
+    integer, parameter  :: n = 450
+    complex :: a(n, n), b(n, n)
+    complex, device :: a_d(n, n), b_d(n, n)
+    integer :: plan, ierr
+    real, dimension(3) :: res, exp
+
+    a = 1; a_d = a
+    ierr = cufftPlan2D(plan, n, n, CUFFT_C2C)
+    ierr = ierr + cufftExecC2C(plan, a_d, b_d, CUFFT_FORWARD)
+    ierr = ierr + cufftExecC2C(plan, b_d, b_d, CUFFT_INVERSE)
+
+    b = b_d
+    res(1) = maxval(abs(a - b / (n * n)))
+    print *, 'Max error C2C: ', res(1)
+
+end program cufft2dtest

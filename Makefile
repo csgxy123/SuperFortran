@@ -1,4 +1,4 @@
-ALL: eds ramp tfill devtest textest pttest multi
+ALL: eds ramp tfill devtest textest pttest multi cublasdev cublasdev mmul
 
 eds: eds.f03 mytests.o
 	pgfortran -Mcuda $+ -o $@
@@ -21,6 +21,12 @@ pttest: pttest.cuf
 multi: multidimred.cuf
 	pgfortran -Mcuda $+ -o $@
 
+cublasdev: mblasd.cuf
+	pgfortran -Mcuda=cc35 $+ -lcublas_device -o $@
+
+mmul: mmul.cuf
+	pgfortran -Mcuda $+ -c
+
 mytests.o: mytests.cuf
 	pgfortran -Mcuda -c $+
 
@@ -38,5 +44,4 @@ memtests.o: memtests.cuf
 
 .PHONY: clean
 clean:
-	rm -f *.o *.mod devtest ramp tfill eds textest pttest multi
-
+	rm -f *.o *.mod devtest ramp tfill eds textest pttest multi cublasdev mmul
