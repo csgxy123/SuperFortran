@@ -1,0 +1,68 @@
+module atest
+
+    implicit none
+
+contains
+
+    attributes(global) subroutine matrixinc(a, n)
+        implicit none
+        real, device    :: a(n, n)
+        integer, value  :: n
+        integer         :: i, j
+        i = (blockIdx%x - 1) * 10 + threadIdx%x
+        j = (blockIdx%x - 1) * 10 + threadIdx%y
+        if ((i .le. n) .and. (j .le. n)) then
+            a(i, j) = a(i, j) + 1.0
+        endif
+        return
+    end subroutine
+
+end module
+
+program mapmem
+
+    use cudafor
+    use atest
+    use, intrinsic :: iso_c_binding
+
+    type(c_ptr)     :: a
+    type(c_devptr)  :: a_d
+    real, dimension(:, :), pointer  :: fa
+    real, dimension(:, :), allocatable, device  :: fa_d
+    type(dim3)  :: blcks, thrds
+
+    integer :: istat, i, j
+    istat = cudaSetDeviceFlags(cudadevicemaphost)
+    istat = cudaHostAlloc(a, 100 * 100 * sizeof(1.0), cudaHostAllocMapped)
+    ! can move the c_ptr to an f90 pointer
+    call c_f_pointer(a, fa, (/ 100, 100 /))
+    ! update the data on the host
+    do j = 1, 100
+        do i = 1, 100
+            fa(i, j) = real(i) + j * 100.0
+        enddo
+    enddo
+
+    ! get a device pointer to the same array
+    istat = cudaHostGetDevicePointer(a_d, a, 0)
+
+    ! can move the c_devptr to an device allocatable array
+    call c_f_pointer(a_d, fa_d, (/ 100, 100 /))
+    !
+    blcks = dim3(10, 10, 1)
+    thrds = dim3(10, 10, 1)
+    !
+    call matrixinc<<<blcks, thrds>>>(fa_d, 100)
+
+    ! need to synchronize
+    istat = cudaDeviceSynchronize()
+    !
+    do j = 1, 100
+        do i = 1, 100
+            if (fa(i, j) .ne. (real(i) + j * 100.0 + 1.0)) print *, "failure ", i, j, fa(i, j), (real(i) + j * 100.0 + 1.0)
+        enddo
+    enddo
+    !
+    istat = cudaFreeHost(a)
+
+end program

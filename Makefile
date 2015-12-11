@@ -1,4 +1,4 @@
-ALL: eds ramp tfill devtest textest pttest multi cublasdev cublasdev mmul
+ALL: eds ramp tfill devtest textest pttest multi cublasdev cublasdev mmul mapmem
 
 eds: eds.f03 mytests.o
 	pgfortran -Mcuda $+ -o $@
@@ -27,6 +27,10 @@ cublasdev: mblasd.cuf
 mmul: mmul.cuf
 	pgfortran -Mcuda $+ -c
 
+# failed the test
+mapmem: mapmem.cuf
+	pgfortran -Mcuda $+ -o $@
+
 mytests.o: mytests.cuf
 	pgfortran -Mcuda -c $+
 
@@ -44,4 +48,4 @@ memtests.o: memtests.cuf
 
 .PHONY: clean
 clean:
-	rm -f *.o *.mod devtest ramp tfill eds textest pttest multi cublasdev mmul
+	rm -f *.o *.mod devtest ramp tfill eds textest pttest multi cublasdev mmul mapmem
