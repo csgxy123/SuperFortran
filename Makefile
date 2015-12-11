@@ -1,4 +1,4 @@
-ALL: eds ramp tfill devtest textest pttest multi cublasdev cublasdev mmul mapmem
+ALL: eds ramp tfill devtest textest pttest multi cublasdev cublasdev mmul mapmem async
 
 eds: eds.f03 mytests.o
 	pgfortran -Mcuda $+ -o $@
@@ -31,6 +31,9 @@ mmul: mmul.cuf
 mapmem: mapmem.cuf
 	pgfortran -Mcuda $+ -o $@
 
+async: testAsync.cuf
+	pgfortran -Mcuda $+ -o $@
+
 mytests.o: mytests.cuf
 	pgfortran -Mcuda -c $+
 
@@ -48,4 +51,4 @@ memtests.o: memtests.cuf
 
 .PHONY: clean
 clean:
-	rm -f *.o *.mod devtest ramp tfill eds textest pttest multi cublasdev mmul mapmem
+	rm -f *.o *.mod devtest ramp tfill eds textest pttest multi cublasdev mmul mapmem async
