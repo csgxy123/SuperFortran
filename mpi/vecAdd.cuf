@@ -1,0 +1,70 @@
+module kernel
+
+contains
+    
+    attributes(global) subroutine vecAdd_kernel(n, a, b, c)
+
+        implicit none
+        integer, value  :: n
+        real(8), device :: a(n), b(n), c(n)
+        integer :: id
+
+        ! Get our global thread id
+        id = (blockIdx%x - 1) * blockDim%x + threadIdx%x
+
+        ! Make sure we do not go out of bounds
+        if (id <= n) then
+			c(id) = a(id) + b(id)
+		endif
+		return
+    end subroutine
+    
+end module kernel
+
+program main
+
+	use cudafor
+	use kernel
+	implicit none
+
+	type(dim3)	:: blockSize, gridSize
+	real(8)	:: tsum
+	integer	:: i
+
+	! Size of vectors
+	integer	:: n = 100000
+
+	! Host input & output vectors
+	real(8), dimension(:), allocatable	:: h_a, h_b, h_c
+
+	! Device input & output vectors
+	real(8), dimension(:), allocatable, device	:: d_a, d_b, d_c
+
+	! Allocate memory for host memory
+	allocate(h_a(n), h_b(n), h_c(n))
+	! Allocate memory for GPU device memory
+	allocate(d_a(n), d_b(n), d_c(n))
+
+	! Initialze content
+	do i = 1, n
+		h_a(i) = sin(i * 1d0) * sin(i * 1d0)
+		h_b(i) = cos(i * 1d0) * cos(i * 1d0)
+	enddo
+
+	d_a = h_a(1:n); d_b = h_b(1:n)
+
+	blockSize = dim3(1024, 1, 1)
+	gridSize = dim3(ceiling(real(n) / real(blockSize%x)), 1, 1)
+	call vecAdd_kernel<<<gridSize, blockSize>>>(n, d_a, d_b, d_c)
+
+	h_c = d_c(1:n)
+	tsum = 0.0
+	do i = 1, n
+		tsum = tsum + h_c(i)
+	enddo
+	print *, 'final result: ', tsum
+
+	deallocate(h_a, h_b, h_c)
+	deallocate(d_a, d_b, d_c)
+
+end program 

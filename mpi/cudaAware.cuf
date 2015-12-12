@@ -1,0 +1,64 @@
+program cudaAware
+
+	use cudafor
+	use mpi
+	implicit none
+
+	integer						:: ierr, myid, numprocs, name_len, i
+	integer						:: status(MPI_STATUS_SIZE)
+	character(len = 32)			:: processor_name
+	integer, parameter			:: n = 1024
+	real, dimension(:), device	:: buf_d(n)
+	real, dimension(:)			:: buf_h(n)
+
+	call MPI_INIT(ierr)
+	call MPI_COMM_RANK(MPI_COMM_WORLD, myid, ierr)
+	call MPI_COMM_SIZE(MPI_COMM_WORLD, numprocs, ierr)
+	call MPI_GET_PROCESSOR_NAME(processor_name, name_len, ierr)
+
+	if (numprocs .ne. 2) then
+		print *, 'numprocs is not 2, exit'
+		call exit(1)
+	endif
+
+	print *, 'myid = ', myid
+
+	if (myid .eq. 0) then
+
+		! Initialize device memory with kernel do loop
+		!
+		!$cuf kernel do(1) 
+		do i = 1, n
+			buf_d(i) = 2.5 * i
+		enddo
+
+		call MPI_SEND(buf_d(1), n, MPI_REAL, 1, 1, MPI_COMM_WORLD, ierr)
+
+	endif
+
+	if (myid .eq. 1) then
+
+		! First assign some different value to the device memory
+		!
+		!$cuf kernel do(1)
+		do i = 1, n
+			buf_d(i) = 0.
+		enddo
+		buf_h = buf_d
+		do i = 1, 5
+			print *, buf_h(i)
+		enddo
+
+		! Device memory as RECV destination
+		call MPI_RECV(buf_d(1), n, MPI_REAL, 0, 1, MPI_COMM_WORLD, status, ierr)
+
+		buf_h = buf_d
+		do i = 1, 5
+			print *, buf_h(i)
+		enddo
+
+	endif
+
+	call MPI_FINALIZE(ierr)
+
+end program cudaAware

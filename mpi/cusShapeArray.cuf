@@ -1,0 +1,23 @@
+program cusShapeArray
+
+	use cudafor
+	implicit none
+
+	real, dimension(-15:16), device	:: buf_d
+	real, dimension(-15:16)			:: buf_h
+	integer	:: i
+
+	!$cuf kernel do(1)
+	do i = -15, 16
+		buf_d(i) = i * 1.5
+	enddo
+
+	do i = -15, 16
+		buf_h = 0.
+	enddo
+	buf_h = buf_d
+	do i = -15, 16
+		print *, buf_h(i)
+	enddo
+
+end program
